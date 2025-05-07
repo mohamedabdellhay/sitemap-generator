@@ -21,6 +21,28 @@
             transform: translateY(-1px);
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
         }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th,
+        td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        th {
+            background-color: #f9fafb;
+            font-weight: 600;
+            color: #374151;
+        }
+
+        tr:hover {
+            background-color: #f3f4f6;
+        }
     </style>
 </head>
 
@@ -41,19 +63,33 @@
         {% endif %}
 
         {% if sitemaps %}
-        <div class="space-y-4">
-            {% for sitemap in sitemaps %}
-            <div class="flex items-center justify-between bg-gray-50 p-4 rounded-lg border border-gray-200">
-                <div class="flex items-center gap-3">
-                    <i class="fas fa-sitemap text-blue-600"></i>
-                    <span class="text-gray-700">{{ sitemap }}</span>
-                </div>
-                <a href="{{ url_for('download_sitemap', filename=sitemap) }}"
-                    class="btn bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 flex items-center gap-2">
-                    <i class="fas fa-download"></i> Download
-                </a>
-            </div>
-            {% endfor %}
+        <div class="overflow-x-auto">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Website</th>
+                        <th>Creation Date</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for sitemap in sitemaps %}
+                    <tr>
+                        <td class="flex items-center gap-3">
+                            <i class="fas fa-sitemap text-blue-600"></i>
+                            {{ sitemap.domain }}
+                        </td>
+                        <td>{{ sitemap.creation_date }}</td>
+                        <td>
+                            <a href="{{ url_for('download_sitemap', filename=sitemap.filename) }}"
+                                class="btn bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 flex items-center gap-2 inline-flex">
+                                <i class="fas fa-download"></i> Download
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
         {% else %}
         <p class="text-center text-gray-500">No sitemaps found in the last_work folder.</p>

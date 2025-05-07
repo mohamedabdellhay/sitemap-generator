@@ -6,6 +6,7 @@ import logging
 from datetime import datetime
 from sitemap_generator import SitemapGenerator  
 from urllib.parse import urlparse
+import re
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = 'last_work'
@@ -13,7 +14,7 @@ LOG_FILE = 'app.log'
 
 # Set up logging
 logging.basicConfig(
-    level=logging.DEBUG,  # Changed to DEBUG for more detailed logging
+    level=logging.DEBUG,
     format='%(asctime)s [%(levelname)s] %(message)s',
     handlers=[
         logging.FileHandler(LOG_FILE),
@@ -74,7 +75,7 @@ def generate_sitemap():
         
         # Generate filename from root URL and timestamp
         parsed_url = urlparse(root_url)
-        domain = parsed_url.netloc.replace('.', '_')  # e.g., elghazawy_com
+        domain = parsed_url.netloc.replace('.', '_')
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
         filename = f"{domain}_{timestamp}.xml"
         if data.get('compress', False):
@@ -87,7 +88,6 @@ def generate_sitemap():
             xml_content = '<?xml version="1.0" encoding="UTF-8"?>\n'
             xml_content += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
             for url in urls:
-                # Determine changefreq and priority
                 url_lower = url.lower()
                 if url == root_url:
                     priority = '1.0'
@@ -114,7 +114,7 @@ def generate_sitemap():
                 xml_content += '  </url>\n'
             xml_content += '</urlset>'
             
-            # Write file (compressed or uncompressed)
+            # Write file
             logger.info(f"Writing sitemap to: {output_path}")
             if data.get('compress', False):
                 import gzip
@@ -159,7 +159,32 @@ def download_sitemap(filename):
 @app.route('/sitemaps')
 def sitemaps():
     try:
-        sitemaps = [f for f in os.listdir(app.config['UPLOAD_FOLDER']) if f.endswith(('.xml', '.xml.gz'))]
+        sitemaps = []
+        for filename in os.listdir(app.config['UPLOAD_FOLDER']):
+            if filename.endswith(('.xml', '.xml.gz')):
+                # Extract domain and timestamp from filename
+                match = re.match(r'(.+)_(\d{8}_\d{6})\.xml(\.gz)?$', filename)
+                if match:
+                    domain = match.group(1).replace('_', '.')  # e.g., elghazawy_com -> elghazawy.com
+                    timestamp = match.group(2)  # e.g., 20250507_143022
+                    # Format timestamp to YYYY-MM-DD HH:MM:SS
+                    try:
+                        creation_date = datetime.strptime(timestamp, '%Y%m%d_%H%M%S').strftime('%Y-%m-%d %H:%M:%S')
+                    except ValueError:
+                        creation_date = 'Unknown'
+                    sitemaps.append({
+                        'filename': filename,
+                        'domain': domain,
+                        'creation_date': creation_date
+                    })
+                else:
+                    # Fallback for files not matching the pattern
+                    sitemaps.append({
+                        'filename': filename,
+                        'domain': filename,
+                        'creation_date': 'Unknown'
+                    })
+        logger.info(f"Found sitemaps: {[s['filename'] for s in sitemaps]}")
         return render_template('sitemaps.html', sitemaps=sitemaps)
     except Exception as e:
         logger.error(f"Error listing sitemaps: {str(e)}")
