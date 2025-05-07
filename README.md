@@ -32,7 +32,7 @@ A web-based application for generating XML sitemaps for websites. This tool craw
 1. **Clone the Repository**:
 
    ```bash
-   git clone <repository-url>
+   git clone https://github.com/mohamedabdellhay/sitemap-generator.git
    cd sitemap-generator
    ```
 
@@ -142,4 +142,4 @@ This project is licensed under the MIT License. See the `LICENSE` file for detai
 
 ## Contact
 
-For questions or feedback, please contact the project maintainer at [your-email@example.com].
+For questions or feedback, please contact the project maintainer at [mohamedabdellhay1@gmail.com].
