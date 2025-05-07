@@ -6,24 +6,24 @@ import logging
 from datetime import datetime
 from sitemap_generator import SitemapGenerator  
 
-# Initialize Flask app
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = 'generated_sitemaps'
-LOG_FILE = 'app.log'  # File to store logs
+LOG_FILE = 'app.log'
 
-# Create upload folder if it doesn't exist
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
-# Configure logging
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s [%(levelname)s] %(message)s',
     handlers=[
-        logging.FileHandler(LOG_FILE),  # Write logs to app.log
-        logging.StreamHandler()  # Also output to console
+        logging.FileHandler(LOG_FILE),
+        logging.StreamHandler()
     ]
 )
 logger = logging.getLogger(__name__)
+
+# متغير عالمي لتتبع عدد الروابط
+current_url_count = 0
 
 @app.route('/')
 def index():
@@ -31,11 +31,12 @@ def index():
 
 @app.route('/generate', methods=['POST'])
 def generate_sitemap():
+    global current_url_count
+    current_url_count = 0  # إعادة تعيين العدد
     data = request.json
     logger.info(f"Received request to generate sitemap for {data.get('root_url')}")
 
     try:
-        # Initialize sitemap generator
         generator = SitemapGenerator(
             root_url=data['root_url'],
             max_urls=int(data.get('max_urls', 1000)),
@@ -44,7 +45,6 @@ def generate_sitemap():
             max_workers=int(data.get('max_workers', 5))
         )
         
-        # Crawl and collect URLs
         logger.info("Starting crawl...")
         urls = generator.crawl_site()
         
@@ -52,7 +52,6 @@ def generate_sitemap():
             logger.error("No URLs found during crawling")
             return jsonify({"error": "No URLs found during crawling"}), 400
         
-        # Generate sitemap file
         filename = f"sitemap_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xml"
         output_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         
@@ -64,6 +63,7 @@ def generate_sitemap():
         )
         
         logger.info(f"Sitemap generated with {len(urls)} URLs")
+        current_url_count = len(urls)  # تحديث العدد النهائي
         return jsonify({
             "message": "Sitemap generated successfully",
             "filename": filename,
@@ -86,23 +86,21 @@ def download_sitemap(filename):
 
 @app.route('/generate-log')
 def generate_log():
+    global current_url_count
     def stream_logs():
         last_position = 0
         while True:
             try:
-                # Open the log file and seek to the last known position
                 with open(LOG_FILE, 'r', encoding='utf-8') as f:
                     f.seek(last_position)
                     new_logs = f.read()
                     if new_logs:
-                        # Send new log lines to the client
-                        yield f'data: {json.dumps({"log": new_logs})}\n\n'
-                    last_position = f.tell()  # Update the last read position
+                        # إرسال السجل مع عدد الروابط الحالي
+                        yield f'data: {json.dumps({"log": new_logs, "url_count": current_url_count})}\n\n'
+                    last_position = f.tell()
             except FileNotFoundError:
-                yield f'data: {json.dumps({"log": "Log file not found"})}\n\n'
+                yield f'data: {json.dumps({"log": "Log file not found", "url_count": current_url_count})}\n\n'
                 break
-
-            # Sleep briefly to avoid overloading the server
             time.sleep(1)
 
     return Response(stream_logs(), mimetype='text/event-stream')
