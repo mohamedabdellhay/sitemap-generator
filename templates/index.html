@@ -35,7 +35,6 @@
         .log-box {
             position: relative;
             overflow: hidden;
-            /* إخفاء أي محتوى خارج حدود الصندوق */
             height: 12rem;
         }
 
@@ -48,7 +47,6 @@
             height: 100%;
             background: linear-gradient(to bottom, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.3));
             pointer-events: none;
-            /* منع التأثير على التفاعل مع السجلات */
             z-index: 1;
             opacity: 0.5;
         }
@@ -56,7 +54,6 @@
         .log-content {
             position: relative;
             z-index: 2;
-            /* التأكد إن السجلات فوق الطبقة */
         }
 
         .log-entry {
@@ -116,6 +113,13 @@
             padding-left: 36px;
         }
 
+        .urls-found {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 600;
+        }
+
         @media (max-width: 640px) {
             h2 {
                 font-size: 1.5rem;
@@ -152,7 +156,7 @@
                     <div>
                         <label for="max_urls" class="block text-sm font-medium text-gray-700 mb-1">Maximum URLs</label>
                         <input type="number" id="max_urls" value="1000"
-                            class="w-full border border-gray-300 rounded-lg p-3 focus:outline-none center focus:ring-2 focus:ring-blue-500">
+                            class="w-full border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-500">
                     </div>
                     <div>
                         <label for="delay" class="block text-sm font-medium text-gray-700 mb-1">Delay Between Requests
@@ -193,6 +197,9 @@
                 <div class="indeterminate-bar"></div>
             </div>
             <p class="mt-2 text-blue-600 animate-pulse text-center">Crawling site and generating sitemap...</p>
+            <p class="mt-1 text-gray-600 text-center urls-found">
+                <i class="fas fa-link"></i> URLs found: <span id="urlsFound">0</span>
+            </p>
         </div>
 
         <!-- Log Box -->
@@ -233,6 +240,7 @@
         const error = document.getElementById('error');
         const logBox = document.getElementById('logBox');
         const logContent = logBox.querySelector('.log-content');
+        const urlsFound = document.getElementById('urlsFound');
         const MAX_LOGS = 100;
 
         form.addEventListener('submit', function (e) {
@@ -243,6 +251,7 @@
             result.classList.add('hidden');
             error.classList.add('hidden');
             logContent.innerHTML = '';
+            urlsFound.textContent = '0';
 
             const formData = {
                 root_url: form.root_url.value,
@@ -260,7 +269,7 @@
 
                 const entry = document.createElement('div');
                 entry.className = `log-entry text-${type === 'error' ? 'red' : 'gray'}-700`;
-                entry.innerHTML = `<i class="fas fa-${type === 'error' ? 'exclamation-circle' : 'info-circle'}"></i> [${new Date().toLocaleTimeString()}] ${message}`;
+                entry.innerHTML = `<i class="fas fa-${type === 'error' ? 'exclamation-circle' : 'info-circle'}"></i> [${new Date().toLocaleTimeString()}] ${message.replace(/\n/g, '<br>')}`;
                 logContent.appendChild(entry);
                 logBox.scrollTop = logBox.scrollHeight;
             };
@@ -272,6 +281,9 @@
                 const data = JSON.parse(event.data);
                 if (data.log) {
                     addLogEntry(data.log);
+                }
+                if (data.url_count !== undefined) {
+                    urlsFound.textContent = data.url_count;
                 }
             };
             eventSource.onerror = function () {
@@ -299,6 +311,12 @@
                         document.getElementById('downloadBtn').href = `/download/${data.filename}`;
                         result.classList.remove('hidden');
                         loading.classList.add('hidden');
+                        // Redirect to sitemaps page
+                        if (data.redirect) {
+                            setTimeout(() => {
+                                window.location.href = data.redirect;
+                            }, 1000); // Delay for user to see success message
+                        }
                     }
                 })
                 .catch(err => {

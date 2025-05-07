@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sitemap History</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Inter', 'Arial', sans-serif;
+            background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+        }
+
+        .btn {
+            transition: all 0.3s ease;
+        }
+
+        .btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+
+<body class="min-h-screen flex items-center justify-center p-4">
+    <div class="max-w-4xl w-full bg-white rounded-2xl shadow-xl p-8">
+        <div class="text-center mb-8">
+            <h2 class="text-3xl font-bold text-gray-800">Sitemap History</h2>
+            <p class="text-gray-500 mt-2">View and download all generated sitemaps</p>
+        </div>
+
+        {% if error %}
+        <div class="bg-red-50 border border-red-200 text-red-800 p-4 rounded-lg mb-6">
+            <span class="font-semibold flex items-center gap-2">
+                <i class="fas fa-exclamation-circle"></i> Error
+            </span>
+            {{ error }}
+        </div>
+        {% endif %}
+
+        {% if sitemaps %}
+        <div class="space-y-4">
+            {% for sitemap in sitemaps %}
+            <div class="flex items-center justify-between bg-gray-50 p-4 rounded-lg border border-gray-200">
+                <div class="flex items-center gap-3">
+                    <i class="fas fa-sitemap text-blue-600"></i>
+                    <span class="text-gray-700">{{ sitemap }}</span>
+                </div>
+                <a href="{{ url_for('download_sitemap', filename=sitemap) }}"
+                    class="btn bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 flex items-center gap-2">
+                    <i class="fas fa-download"></i> Download
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-center text-gray-500">No sitemaps found in the last_work folder.</p>
+        {% endif %}
+
+        <div class="mt-6 text-center">
+            <a href="{{ url_for('index') }}"
+                class="btn bg-gray-600 text-white py-2 px-4 rounded-lg hover:bg-gray-700 flex items-center gap-2 inline-flex">
+                <i class="fas fa-arrow-left"></i> Back to Generator
+            </a>
+        </div>
+    </div>
+</body>
+
+</html>
