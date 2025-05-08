@@ -81,10 +81,16 @@
                         </td>
                         <td>{{ sitemap.creation_date }}</td>
                         <td>
-                            <a href="{{ url_for('download_sitemap', filename=sitemap.filename) }}"
-                                class="btn bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 flex items-center gap-2 inline-flex">
-                                <i class="fas fa-download"></i> Download
-                            </a>
+                            <div>
+                                <a href="{{ url_for('download_sitemap', filename=sitemap.filename) }}"
+                                    class="btn bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 flex items-center gap-2 inline-flex">
+                                    <i class="fas fa-download"></i> Download
+                                </a>
+                                <a href="{{ url_for('view_sitemap', filename=sitemap.filename, subpath=sitemap.domain) }}/sitemap.xml"
+                                    class="btn bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 flex items-center gap-2 inline-flex">
+                                    <i class="fa-duotone fa-solid fa-eye"></i> View
+                                </a>
+                            </div>
                         </td>
                     </tr>
                     {% endfor %}

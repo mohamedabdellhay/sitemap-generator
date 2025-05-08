@@ -8,6 +8,8 @@ from sitemap_generator import SitemapGenerator
 from urllib.parse import urlparse
 import re
 from util import format_creation_date 
+import gzip
+
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = 'last_work'
 LOG_FILE = 'app.log'
@@ -155,6 +157,16 @@ def download_sitemap(filename):
     
     logger.info(f"Downloading file: {filename}")
     return send_file(file_path, as_attachment=True)
+
+@app.route("/view/<filename>/<path:subpath>")
+def view_sitemap(filename, subpath):
+    file_path = f"last_work/{filename}"
+    try:
+        with gzip.open(file_path, 'rt', encoding='utf-8') as f:
+            content = f.read()
+        return Response(content, mimetype='application/xml')
+    except UnicodeDecodeError:
+        return "Error: Unable to decode the file. Ensure it is a valid UTF-8 encoded gzip file.", 500
 
 @app.route('/sitemaps')
 def sitemaps():
