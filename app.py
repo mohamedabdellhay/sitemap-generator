@@ -7,7 +7,7 @@ from datetime import datetime
 from sitemap_generator import SitemapGenerator  
 from urllib.parse import urlparse
 import re
-
+from util import format_creation_date 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = 'last_work'
 LOG_FILE = 'app.log'
@@ -160,6 +160,7 @@ def download_sitemap(filename):
 def sitemaps():
     try:
         sitemaps = []
+        
         for filename in os.listdir(app.config['UPLOAD_FOLDER']):
             if filename.endswith(('.xml', '.xml.gz')):
                 # Extract domain and timestamp from filename
@@ -168,23 +169,22 @@ def sitemaps():
                     domain = match.group(1).replace('_', '.')  # e.g., elghazawy_com -> elghazawy.com
                     timestamp = match.group(2)  # e.g., 20250507_143022
                     # Format timestamp to YYYY-MM-DD HH:MM:SS
-                    try:
-                        creation_date = datetime.strptime(timestamp, '%Y%m%d_%H%M%S').strftime('%Y-%m-%d %H:%M:%S')
-                    except ValueError:
-                        creation_date = 'Unknown'
                     sitemaps.append({
                         'filename': filename,
                         'domain': domain,
-                        'creation_date': creation_date
+                        'creation_date': format_creation_date(timestamp),
+                        'timestamp': timestamp,
                     })
                 else:
                     # Fallback for files not matching the pattern
                     sitemaps.append({
                         'filename': filename,
                         'domain': filename,
-                        'creation_date': 'Unknown'
+                        'creation_date': 'Unknown',
+                        'timestamp': timestamp, 
                     })
         logger.info(f"Found sitemaps: {[s['filename'] for s in sitemaps]}")
+        sitemaps.sort(key=lambda x: x['timestamp'], reverse=True)
         return render_template('sitemaps.html', sitemaps=sitemaps)
     except Exception as e:
         logger.error(f"Error listing sitemaps: {str(e)}")
